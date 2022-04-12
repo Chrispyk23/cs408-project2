@@ -1,28 +1,47 @@
 package edu.jsu.mcis.cs408.project2;
 
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
+import android.support.v4.app.*;
 
-import java.util.ArrayList;
+public class TabPagerAdapter extends FragmentPagerAdapter {
 
-public class TabLayoutAdapter extends FragmentStateAdapter {
+    public static final int MAIN_FRAGMENT = 0;
+    public static final int PUZZLE_FRAGMENT = 1;
+    public static final int CLUES_FRAGMENT = 2;
 
-    private final ArrayList<Fragment> fragments;
+    int tabCount;
 
-    public TabLayoutAdapter(Fragment fragment, ArrayList<Fragment> fragments) {
+    private MainFragmentView mainFragmentView;
+    private PuzzleFragmentView puzzleFragmentView;
+    private CluesFragmentView cluesFragmentView;
 
-        super(fragment);
+    public TabPagerAdapter(FragmentManager fm, int numTabs) {
 
-        this.fragments = fragments;
+        super(fm);
+        this.tabCount = numTabs;
+
+        mainFragmentView = new MainFragmentView();
+        puzzleFragmentView = new PuzzleFragmentView();
+        cluesFragmentView = new CluesFragmentView();
 
     }
 
-    @NonNull
     @Override
-    public Fragment createFragment(int position) { return fragments.get(position); }
+    public Fragment getItem(int position) {
+
+        switch (position) {
+
+            case MAIN_FRAGMENT: return mainFragmentView;
+            case PUZZLE_FRAGMENT: return PuzzleFragmentView;
+            case CLUES_FRAGMENT: return cluesFragmentView;
+            default: return null;
+
+        }
+
+    }
 
     @Override
-    public int getItemCount() { return fragments.size(); }
+    public int getCount() {
+        return tabCount;
+    }
 
 }

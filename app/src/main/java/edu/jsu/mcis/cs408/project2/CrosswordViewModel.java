@@ -1,213 +1,219 @@
 package edu.jsu.mcis.cs408.project2;
 
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.ViewModel;
 import android.content.Context;
 import android.util.Log;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
-public class CrosswordViewModel extends ViewModel {
+public class CrosswordMagicViewModel extends ViewModel {
 
-    private static final int WORD_DATA_FIELDS = 6;
-    private static final int WORD_HEADER_FIELDS = 2;
-    public static final char BLOCK_CHAR = '*';
-    public static final char BLANK_CHAR = ' ';
+    /* Application Context */
 
-    private static final String TAG = "CrosswordViewModel";
+    private final MutableLiveData<Context> context = new MutableLiveData<Context>();
 
+    /* Display Properties */
+
+    private final MutableLiveData<Integer> windowOverheadDp = new MutableLiveData<Integer>();
+    private final MutableLiveData<Integer> windowHeightDp = new MutableLiveData<Integer>();
+    private final MutableLiveData<Integer> windowWidthDp = new MutableLiveData<Integer>();
+    private final MutableLiveData<Integer> puzzleHeight = new MutableLiveData<Integer>();
+    private final MutableLiveData<Integer> puzzleWidth = new MutableLiveData<Integer>();
+
+    /* Puzzle Data */
+
+    private final MutableLiveData<Integer> puzzleID = new MutableLiveData<Integer>();
     private final MutableLiveData<HashMap<String, Word>> words = new MutableLiveData<>();
+    private final MutableLiveData<String> aClues = new MutableLiveData<String>();
+    private final MutableLiveData<String> dClues = new MutableLiveData<String>();
 
-    private final MutableLiveData<char[][]> letters = new MutableLiveData<>();
-    private final MutableLiveData<int[][]> numbers = new MutableLiveData<>();
+    private final MutableLiveData<Character[][]> letters = new MutableLiveData<Character[][]>();
+    private final MutableLiveData<Integer[][]> numbers = new MutableLiveData<Integer[][]>();
 
-    private final MutableLiveData<Integer> puzzleWidth = new MutableLiveData<>();
-    private final MutableLiveData<Integer> puzzleHeight = new MutableLiveData<>();
+    /* Setters / Getters */
 
-    private final MutableLiveData<String> cluesAcross = new MutableLiveData<>();
-    private final MutableLiveData<String> cluesDown = new MutableLiveData<>();
-
-    // Initialize Shared Model
-
-    public void init(Context context) {
-
-        if (words.getValue() == null) {
-            loadWords(context);
-            addAllWordsToGrid(); // for testing only; remove later!
-        }
-
+    public void setContext(Context c) {
+        context.setValue(c);
     }
 
-    // Add Word to Grid
-
-    private void addWordToGrid(String key) {
-
-        // Get word from collection (look up using the given key)
-
-        Word word = Objects.requireNonNull(words.getValue()).get(key);
-
-        // Was the word found in the collection?
-
-        if (word != null) {
-
-            // If so, get properties (row, column, and the word itself)
-
-            int row = word.getRow();
-            int column = word.getColumn();
-            String w = word.getWord();
-
-            // Add word to Letters array, one character at a time
-
-            /*
-
-                INSERT YOUR CODE HERE
-
-            */
-
-        }
-
+    public void setWindowHeightDp(int height) {
+        windowHeightDp.setValue(height);
     }
 
-    // Add all words to grid (for testing purposes only!)
+    public void setWindowWidthDp(int width) {
+        windowWidthDp.setValue(width);
+    }
 
-    private void addAllWordsToGrid() {
-        for (Map.Entry<String, Word> e : Objects.requireNonNull(words.getValue()).entrySet()) {
-            addWordToGrid( e.getKey() );
+    public void setPuzzleHeight(int height) {
+        puzzleHeight.setValue(height);
+    }
+
+    public void setPuzzleWidth(int width) {
+        puzzleWidth.setValue(width);
+    }
+
+    public void setWindowOverheadDp(int width) {
+        windowOverheadDp.setValue(width);
+    }
+
+    public void setPuzzleID(int id) {
+        if ( (puzzleID.getValue() == null) || (puzzleID.getValue() != id) ) {
+            getPuzzleData(id);
+            puzzleID.setValue(id);
         }
     }
 
-    // Load game data from puzzle file ("puzzle.csv")
+    public Context getContext() {
+        return context.getValue();
+    }
 
-    private void loadWords(Context context) {
+    public int getWindowHeightDp() {
+        return windowHeightDp.getValue();
+    }
 
-        HashMap<String, Word> map = new HashMap<>();
-        StringBuilder clueAcrossBuffer = new StringBuilder();
-        StringBuilder clueDownBuffer = new StringBuilder();
+    public int getWindowWidthDp() {
+        return windowWidthDp.getValue();
+    }
 
-        // Open puzzle file
+    public int getPuzzleHeight() {
+        return puzzleHeight.getValue();
+    }
 
-        int id = R.raw.puzzle;
-        BufferedReader br = new BufferedReader(new InputStreamReader(context.getResources().openRawResource(id)));
+    public int getPuzzleWidth() {
+        return puzzleWidth.getValue();
+    }
+
+    public int getWindowOverheadDp() {
+        return windowOverheadDp.getValue();
+    }
+
+    public int getPuzzleID() {
+        return puzzleID.getValue();
+    }
+
+    public String getAClues() {
+        return aClues.getValue();
+    }
+
+    public String getDClues() {
+        return dClues.getValue();
+    }
+
+    public Character[][] getLetters() {
+        return letters.getValue();
+    }
+
+    public Integer[][] getNumbers() {
+        return numbers.getValue();
+    }
+
+    public HashMap<String, Word> getWords() {
+        return words.getValue();
+    }
+
+    /* Load Puzzle Data from Input File */
+
+    private void getPuzzleData(int id) {
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(context.getValue().getResources().openRawResource(id)));
+        String line;
+        String[] fields;
+
+        HashMap<String, Word> wordMap = new HashMap<>();
+        StringBuilder aString = new StringBuilder();
+        StringBuilder dString = new StringBuilder();
 
         try {
+            fields = br.readLine().trim().split("\t");
+            puzzleHeight.setValue(Integer.valueOf(fields[0]));
+            puzzleWidth.setValue(Integer.valueOf(fields[1]));
 
-            String line = br.readLine();
-            String[] fields = line.trim().split("\t");
+            while (!(line = br.readLine()).isEmpty()){
+                fields = line.trim().split("\t");
+                String wordKey = ((new StringBuilder()).append(fields[2]).append(fields[3])).toString();
+                wordMap.put(wordKey, new Word(fields));
 
-            // Is first row of puzzle file a valid header?
-
-            if (fields.length == WORD_HEADER_FIELDS) {
-
-                // If so, get puzzle height and width from header
-
-                int height = Integer.parseInt(fields[0]);
-                int width = Integer.parseInt(fields[1]);
-
-                // Initialize letter and number arrays
-
-                char[][] lArray = new char[height][width];
-                int[][] nArray = new int[height][width];
-
-                for (int i = 0; i < height; ++i) {
-                    for (int j = 0; j < width; ++j) {
-                        lArray[i][j] = BLOCK_CHAR;
-                        nArray[i][j] = 0;
-                    }
+                if (fields[3].equals("A")){
+                    aString.append(fields[2]).append(": ").append(fields[5]).append("\n");
                 }
-
-                // Read game data (remainder of puzzle file)
-
-                while ((line = br.readLine()) != null) {
-
-                    // Get word fields from next row
-
-                    fields = line.trim().split("\t");
-
-                    // Is this a valid word?
-
-                    if (fields.length == WORD_DATA_FIELDS) {
-
-                        // If so, initialize new word
-
-                        Word word = new Word(fields);
-
-                        // Get row and column
-
-                        int row = word.getRow();
-                        int column = word.getColumn();
-
-                        // Add box number
-
-                        nArray[row][column] = word.getBox();
-
-                        // Clear grid squares
-
-                        /*
-
-                            INSERT YOUR CODE HERE
-
-                        */
-
-                        // Append Clue to StringBuilder (either clueAcrossBuffer or clueDownBuffer)
-
-                        /*
-
-                            INSERT YOUR CODE HERE
-
-                        */
-
-                        // Create unique key; add word to collection
-
-                        String key = word.getBox() + word.getDirection().toString();
-                        map.put(key, word);
-
-                    }
-
+                else if (fields[3].equals("D")){
+                    dString.append(fields[2]).append(": ").append(fields[5]).append("\n");
                 }
+            }
+            // Read from the input file using the "br" input stream shown above.  Your program
+            // should get the puzzle height/width from the header row in the first line of the
+            // input file.  Replace the placeholder values shown below with the values from the
+            // file.  Get the data from the remaining rows, splitting each tab-delimited line
+            // into an array of strings, which you can use to initialize a Word object.  Add each
+            // Word object to the "wordMap" hash map; for the key names, use the box number
+            // followed by the direction (for example, "16D" for Box # 16, Down).
 
-                // Initialize MutableLiveData Members
 
-                words.setValue(map);
+        } catch (Exception e) {}
 
-                puzzleHeight.setValue(height);
-                puzzleWidth.setValue(width);
+        words.setValue(wordMap);
+        aClues.setValue(aString.toString());
+        dClues.setValue(dString.toString());
 
-                letters.setValue(lArray);
-                numbers.setValue(nArray);
+        Character[][] aLetters = new Character[puzzleHeight.getValue()][puzzleWidth.getValue()];
+        Integer[][] aNumbers = new Integer[puzzleHeight.getValue()][puzzleWidth.getValue()];
 
-                cluesAcross.setValue(clueAcrossBuffer.toString());
-                cluesDown.setValue(clueDownBuffer.toString());
+        for (int i = 0; i < aLetters.length; ++i) {
+            Arrays.fill(aLetters[i], '*');
+        }
 
+        for (int i = 0; i < aNumbers.length; ++i) {
+            Arrays.fill(aNumbers[i], 0);
+        }
+
+        for (HashMap.Entry<String, Word> e : wordMap.entrySet()) {
+
+            Word w = e.getValue();
+
+            for (int i = 0; i < w.getWord().length(); i++){
+                if (w.isDown()){
+                    aLetters[w.getRow() + i][w.getColumn()] = ' ';
+                }
+                else if (w.isAcross()){
+                    aLetters[w.getRow()][w.getColumn() + i] = ' ';
+                }
             }
 
-            br.close();
+            aNumbers[w.getRow()][w.getColumn()] = w.getBox();
 
         }
-        catch (Exception e) { Log.e(TAG, e.toString()); }
+
+        this.letters.setValue(aLetters);
+        this.numbers.setValue(aNumbers);
 
     }
 
-    // Getter Methods
 
-    public LiveData<char[][]> getLetters() { return letters; }
+    public Word getWord(String key){
+        return(words.getValue().get(key));
+    }
 
-    public LiveData<int[][]> getNumbers() { return numbers; }
+    public void addWordToGrid(String key){
+        Word w = getWord(key);
+        Character[][] aLetters = this.letters.getValue();
+        int row = w.getRow();
+        int column = w.getColumn();
+        String word = w.getWord();
+        String direction = w.getDirection();
 
-    public LiveData<String> getCluesAcross() { return cluesAcross; }
-
-    public LiveData<String> getCluesDown() { return cluesDown; }
-
-    public LiveData<Integer> getPuzzleWidth() { return puzzleWidth; }
-
-    public LiveData<Integer> getPuzzleHeight() { return puzzleHeight; }
-
-    public int getBoxNumber(int row, int column) {
-        return Objects.requireNonNull(numbers.getValue())[row][column];
+        for (int i = 0; i < word.length(); i++){
+            if (direction.equals("D")){
+                aLetters[row + i][column] = word.charAt(i);
+            }
+            else if (direction.equals("A")){
+                aLetters[row][column + i] = word.charAt(i);
+            }
+        }
+        this.letters.setValue(aLetters);
     }
 
 }
